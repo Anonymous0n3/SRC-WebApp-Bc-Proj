@@ -1,6 +1,0 @@
-@SRC_WebApp_Bc_Proj.Server_HostAddress = http://localhost:5258
-
-GET {{SRC_WebApp_Bc_Proj.Server_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

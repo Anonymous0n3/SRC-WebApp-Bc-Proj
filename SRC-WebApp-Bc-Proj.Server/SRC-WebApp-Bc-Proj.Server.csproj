@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -7,23 +7,36 @@
     <RootNamespace>SRC_WebApp_Bc_Proj.Server</RootNamespace>
     <UserSecretsId>14ddcd74-a2b9-4a77-ae0e-2bea4f4ab2da</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <SpaRoot>..\src-webapp-bc-proj.client</SpaRoot>
-    <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
+	  <SpaRoot>..\src-webapp-bc-proj.client</SpaRoot>
+	  <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
     <SpaProxyServerUrl>https://localhost:53705</SpaProxyServerUrl>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FFMpegCore" Version="5.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
       <Version>8.*-*</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="Vosk" Version="0.3.38" />
   </ItemGroup>
 
+	<ItemGroup>
+		<None Update="models\**\*.*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	
   <ItemGroup>
     <ProjectReference Include="..\src-webapp-bc-proj.client\src-webapp-bc-proj.client.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="models\" />
+    <Folder Include="uploads\" />
   </ItemGroup>
 
 </Project>

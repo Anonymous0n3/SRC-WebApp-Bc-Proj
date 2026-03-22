@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Ignorování velkých Vosk modelů
+**/models/vosk-model-en-us-*

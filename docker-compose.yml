@@ -1,0 +1,14 @@
+services:
+  gmdss-app:
+    container_name: gmdss-simulator
+    build:
+      context: .
+      dockerfile: SRC-WebApp-Bc-Proj.Server/Dockerfile
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    volumes:
+      # Levá strana (na serveru) : Pravá strana (uvnitř Dockeru, kam zapisuje C#)
+      - ./app_data:/app/thesis_data
