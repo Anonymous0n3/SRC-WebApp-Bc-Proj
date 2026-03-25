@@ -1,14 +1,35 @@
+version: '3.8'
+
 services:
+  # Tvoje hlavní aplikace
   gmdss-app:
     container_name: gmdss-simulator
     build:
       context: .
       dockerfile: SRC-WebApp-Bc-Proj.Server/Dockerfile
-    ports:
-      - "8080:8080"
     restart: unless-stopped
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
     volumes:
-      # Levá strana (na serveru) : Pravá strana (uvnitř Dockeru, kam zapisuje C#)
       - ./app_data:/app/thesis_data
+    # Sekce ports je smazána! Komunikace probíhá uvnitř interní sítě Dockeru.
+
+  # Caddy Reverse Proxy
+  caddy:
+    image: caddy:latest
+    container_name: caddy-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"     # Standardní HTTP
+      - "443:443"   # Bezpečné HTTPS
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro   # Načtení tvé konfigurace
+      - caddy_data:/data                      # Uložení HTTPS certifikátů
+      - caddy_config:/config                  # Interní konfigurace Caddy
+    depends_on:
+      - gmdss-app                             # Caddy se spustí až po tvé aplikaci
+
+# Pojmenované volumes pro Caddy, aby certifikáty přežily restart
+volumes:
+  caddy_data:
+  caddy_config:
