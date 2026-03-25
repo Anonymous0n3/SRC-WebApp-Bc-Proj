@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Tvoje hlavní aplikace
   gmdss-app:
