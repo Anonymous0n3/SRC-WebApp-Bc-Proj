@@ -2,6 +2,8 @@
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from "react-router-dom";
 import "./App.css";
 import recStyles from "./Recorder.module.css";
+import { useLocation } from "react-router-dom";
+import ReactGA from "react-ga4";
 
 // ============================================================================
 // 0. THEMES AND CONTEXT FOR DARK/LIGHT MODE
@@ -388,7 +390,25 @@ const CreditsPage = () => {
 };
 
 // ============================================================================
-// 5. ROUTER AND THEME PROVIDER
+// 5. GOOGLE ANALYTICS
+// ============================================================================
+// Inicializace Google Analytics
+ReactGA.initialize("G-948DERKD08");
+
+// Komponenta, která sleduje, na jaké stránce uživatel zrovna je
+const PageTracker = () => {
+    const location = useLocation();
+
+    React.useEffect(() => {
+        // Pošle informaci o zobrazení stránky do GA pokaždé, když se změní URL
+        ReactGA.send({ hitType: "pageview", page: location.pathname + location.search });
+    }, [location]);
+
+    return null; // Tato komponenta nic nevykresluje, běží jen na pozadí
+};
+
+// ============================================================================
+// 6. ROUTER AND THEME PROVIDER
 // ============================================================================
 
 export default function App() {
@@ -400,6 +420,7 @@ export default function App() {
     return (
         <ThemeContext.Provider value={{ isDark, toggleTheme }}>
             <Router>
+                <PageTracker />
                 <nav style={{ padding: "10px 20px", background: theme.navBg, borderBottom: `1px solid ${theme.borderMain}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                         <Link to="/" style={{ color: theme.textSec, marginRight: "20px", textDecoration: 'none', fontWeight: 'bold' }}>MANUAL</Link>
