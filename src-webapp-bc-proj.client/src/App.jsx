@@ -44,11 +44,9 @@ const ThemeContext = createContext();
 // 1. SHARED DATA AND RECORDING LOGIC (Custom Hook)
 // ============================================================================
 
-// Pomocná funkce pro získání unikátního ID uživatele (Session)
 const getUserId = () => {
     let uid = sessionStorage.getItem('gmdss_user_id');
     if (!uid) {
-        // Vygeneruje náhodné ID, např. "user_a1b2c3d4e"
         uid = 'user_' + Math.random().toString(36).substr(2, 9);
         sessionStorage.setItem('gmdss_user_id', uid);
     }
@@ -70,7 +68,7 @@ const useRecorder = (emergencyType) => {
     const gps = { lat: 49.82345, lon: 15.12345, speed: 12.5, heading: 87 };
 
     const incidentData = {
-        MAYDAY: { problem: "BOAT IS SINKING", assistance: "REQUIRE IMMEDIATE ASSISTANCE" },
+        MAYDAY: { problem: "BOAT IS SINKING" },
         PAN_PAN: { problem: "ENGINE FAILURE", assistance: "REQUIRE TOW TO NEAREST PORT" },
         SECURITE: { problem: "LARGE FLOATING DEBRIS IN CHANNEL", assistance: "N/A" },
         RADIO_CHECK_SHIP: { problem: "UNKNOWN VESSEL", assistance: "HOW DO YOU READ ME" },
@@ -78,8 +76,6 @@ const useRecorder = (emergencyType) => {
     };
 
     const currentIncident = incidentData[emergencyType] || { problem: "", assistance: "" };
-
-    // Získáme ID uživatele
     const userId = getUserId();
 
     const startTimer = () => {
@@ -135,15 +131,13 @@ const useRecorder = (emergencyType) => {
         const terminalData = {
             vesselName: vesselData.name, callSign: vesselData.callSign, mmsi: vesselData.mmsi, pob: vesselData.pob,
             latitude: gps.lat.toFixed(5), longitude: gps.lon.toFixed(5), speed: gps.speed, heading: gps.heading,
-            natureOfDistress: currentIncident.problem, assistanceRequired: currentIncident.assistance, timestamp: new Date().toISOString()
+            natureOfDistress: currentIncident.problem, assistanceRequired: currentIncident.assistance || "", timestamp: new Date().toISOString()
         };
 
         const formData = new FormData();
         formData.append("Audio", blob, "recording.webm");
         formData.append("TerminalData", JSON.stringify(terminalData));
         formData.append("EmergencyType", emergencyType);
-
-        // Přidáno ID uživatele
         formData.append("UserId", userId);
 
         try {
@@ -163,7 +157,54 @@ const useRecorder = (emergencyType) => {
 };
 
 // ============================================================================
-// 2. UNIVERSAL CALL SCREEN
+// 2. USER MANUAL PAGE
+// ============================================================================
+
+const ManualPage = () => {
+    const { isDark } = useContext(ThemeContext);
+    const theme = isDark ? themes.dark : themes.light;
+    const navigate = useNavigate();
+
+    return (
+        <div className={recStyles.appContainer} style={{ backgroundColor: theme.appBg, minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px 20px' }}>
+            <div style={{ maxWidth: '800px', backgroundColor: theme.cardBg, padding: '40px', borderRadius: '12px', boxShadow: isDark ? 'none' : '0 10px 25px rgba(0,0,0,0.1)', border: `1px solid ${theme.borderSec}` }}>
+                <h1 style={{ color: isDark ? '#00ffcc' : '#008066', textAlign: 'center', marginBottom: '30px', fontSize: '2.5rem' }}>GMDSS Simulator Manual</h1>
+
+                <div style={{ color: theme.textMain, fontSize: '1.1rem', lineHeight: '1.6' }}>
+                    <h3 style={{ color: theme.textSec, borderBottom: `1px solid ${theme.borderMain}`, paddingBottom: '10px' }}>1. Welcome</h3>
+                    <p>This simulator is designed to help you practice proper GMDSS communication protocols, including Distress, Urgency, Safety, and Routine calls.</p>
+
+                    <h3 style={{ color: theme.textSec, borderBottom: `1px solid ${theme.borderMain}`, paddingBottom: '10px', marginTop: '30px' }}>2. How to use the simulator</h3>
+                    <ul style={{ paddingLeft: '20px' }}>
+                        <li style={{ marginBottom: '10px' }}><strong>Select a scenario:</strong> From the main menu, click on the type of call you want to practice.</li>
+                        <li style={{ marginBottom: '10px' }}><strong>Review terminal data:</strong> Each scenario provides vessel identification and GPS position data necessary for your call.</li>
+                        <li style={{ marginBottom: '10px' }}><strong>Transmit:</strong> Click the <span style={{ backgroundColor: theme.btnBg, padding: '2px 6px', borderRadius: '4px' }}>TRANSMIT</span> button to open your microphone.</li>
+                        <li style={{ marginBottom: '10px' }}><strong>Speech Protocol:</strong> You must speak clearly and include both the <strong>CALL</strong> (initial identification) and the <strong>MESSAGE</strong> (vessel details and position) in one transmission.</li>
+                        <li style={{ marginBottom: '10px' }}><strong>End transmission:</strong> Click <span style={{ backgroundColor: theme.btnBg, padding: '2px 6px', borderRadius: '4px' }}>END TX</span> when you finish speaking.</li>
+                    </ul>
+
+                    <h3 style={{ color: '#ff4444', borderBottom: `1px solid ${theme.borderMain}`, paddingBottom: '10px', marginTop: '30px' }}>3. Requirements & Limitations</h3>
+                    <ul style={{ paddingLeft: '20px' }}>
+                        <li style={{ marginBottom: '10px' }}><strong>Microphone:</strong> You must allow microphone access in your browser.</li>
+                        <li style={{ marginBottom: '10px' }}><strong>Language:</strong> The voice recognition system currently supports <strong>ENGLISH ONLY</strong>. Please perform all transmissions in English.</li>
+                    </ul>
+                </div>
+
+                <div style={{ textAlign: 'center', marginTop: '40px' }}>
+                    <button
+                        onClick={() => navigate("/menu")}
+                        style={{ backgroundColor: isDark ? '#00ffcc' : '#008066', color: isDark ? '#000' : '#fff', padding: '15px 40px', fontSize: '1.2rem', fontWeight: 'bold', border: 'none', borderRadius: '8px', cursor: 'pointer', transition: '0.2s' }}
+                    >
+                        START SIMULATOR
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ============================================================================
+// 3. UNIVERSAL CALL SCREEN (Kód zůstává beze změn)
 // ============================================================================
 
 const CallScreen = ({ type, color, title, showPob = false, showSpeedHeading = false, showIncidentDetails = false }) => {
@@ -196,7 +237,7 @@ const CallScreen = ({ type, color, title, showPob = false, showSpeedHeading = fa
         <div className={recStyles.appContainer} style={{ backgroundColor: theme.appBg, color: theme.textMain, minHeight: '100vh', paddingBottom: '40px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px', paddingTop: '20px' }}>
                 <h1 className={recStyles.title} style={{ color: color, marginBottom: '15px' }}>{title} TERMINAL</h1>
-                <button onClick={() => navigate("/")} style={{ padding: '10px 20px', backgroundColor: theme.btnBg, color: theme.textMain, border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
+                <button onClick={() => navigate("/menu")} style={{ padding: '10px 20px', backgroundColor: theme.btnBg, color: theme.textMain, border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
                     ← Back to Menu
                 </button>
             </div>
@@ -209,7 +250,7 @@ const CallScreen = ({ type, color, title, showPob = false, showSpeedHeading = fa
                             <div><span style={{ color: theme.textMuted }}>NAME:</span> <br /><b>{vesselData.name}</b></div>
                             <div><span style={{ color: theme.textMuted }}>CALL SIGN:</span> <br /><b>{vesselData.callSign}</b></div>
                             <div><span style={{ color: theme.textMuted }}>MMSI:</span> <br /><b>{vesselData.mmsi}</b></div>
-                            {showPob && <div><span style={{ color: theme.textMuted }}>POB:</span> <br /><b>{vesselData.pob}</b></div>}
+                            {showPob && <div><span style={{ color: theme.textMuted }}>PERSONS ON BOARD:</span> <br /><b>{vesselData.pob}</b></div>}
                         </div>
 
                         <h3 className={recStyles.terminalTitle} style={{ borderBottom: `1px solid ${theme.borderSec}`, paddingBottom: '10px', marginTop: '20px', color: color }}>
@@ -233,7 +274,8 @@ const CallScreen = ({ type, color, title, showPob = false, showSpeedHeading = fa
                                 </h3>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', color: theme.textMain, fontSize: '1.1rem' }}>
                                     <div><span style={{ color: theme.textMuted }}>{getIncidentTitle()}:</span> <br /><b>{currentIncident.problem}</b></div>
-                                    {type !== 'SECURITE' && (
+
+                                    {type !== 'SECURITE' && currentIncident.assistance && (
                                         <div><span style={{ color: theme.textMuted }}>{type.startsWith('RADIO_CHECK') ? 'REQUEST:' : 'ASSISTANCE REQUIRED:'}</span> <br /><b>{currentIncident.assistance}</b></div>
                                     )}
                                 </div>
@@ -301,7 +343,7 @@ const CallScreen = ({ type, color, title, showPob = false, showSpeedHeading = fa
 };
 
 // ============================================================================
-// 3. MAIN MENU
+// 4. MAIN MENU
 // ============================================================================
 
 const MainMenu = () => {
@@ -340,13 +382,13 @@ const CreditsPage = () => {
         <div className={recStyles.appContainer} style={{ backgroundColor: theme.appBg, minHeight: '100vh', padding: '20px' }}>
             <h1 className={recStyles.title} style={{ color: theme.textMain }}>Credits</h1>
             <p style={{ color: theme.textSec }}><strong>VOSK</strong>: This project incorporates the Vosk Offline Speech Recognition Toolkit, which is licensed under the Apache License, Version 2.0.</p>
-            <Link to="/" style={{ color: isDark ? '#00ffcc' : '#008066', fontWeight: 'bold' }}>← Back</Link>
+            <Link to="/menu" style={{ color: isDark ? '#00ffcc' : '#008066', fontWeight: 'bold' }}>← Back to Menu</Link>
         </div>
     );
 };
 
 // ============================================================================
-// 4. ROUTER AND THEME PROVIDER
+// 5. ROUTER AND THEME PROVIDER
 // ============================================================================
 
 export default function App() {
@@ -360,7 +402,8 @@ export default function App() {
             <Router>
                 <nav style={{ padding: "10px 20px", background: theme.navBg, borderBottom: `1px solid ${theme.borderMain}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                        <Link to="/" style={{ color: theme.textSec, marginRight: "20px", textDecoration: 'none', fontWeight: 'bold' }}>HOME</Link>
+                        <Link to="/" style={{ color: theme.textSec, marginRight: "20px", textDecoration: 'none', fontWeight: 'bold' }}>MANUAL</Link>
+                        <Link to="/menu" style={{ color: theme.textSec, marginRight: "20px", textDecoration: 'none', fontWeight: 'bold' }}>MENU</Link>
                         <Link to="/credits" style={{ color: theme.textSec, textDecoration: 'none', fontWeight: 'bold' }}>CREDITS</Link>
                     </div>
                     <button
@@ -373,7 +416,8 @@ export default function App() {
                 </nav>
 
                 <Routes>
-                    <Route path="/" element={<MainMenu />} />
+                    <Route path="/" element={<ManualPage />} />
+                    <Route path="/menu" element={<MainMenu />} />
                     <Route path="/credits" element={<CreditsPage />} />
                     <Route path="/mayday" element={<CallScreen type="MAYDAY" color="#cc0000" title="DISTRESS (MAYDAY)" showPob={true} showSpeedHeading={true} showIncidentDetails={true} />} />
                     <Route path="/panpan" element={<CallScreen type="PAN_PAN" color="#d48800" title="URGENCY (PAN PAN)" showPob={false} showSpeedHeading={false} showIncidentDetails={true} />} />
