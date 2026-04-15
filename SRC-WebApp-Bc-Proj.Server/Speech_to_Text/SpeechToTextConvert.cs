@@ -6,6 +6,7 @@ namespace SRC_WebApp_Bc_Proj.Server.Speech_to_Text
     public class VoskSpeechToTextConverter : ISpeechToTextConvert
     {
         private readonly string _modelPath;
+        private readonly Model _voskModel;
 
         public VoskSpeechToTextConverter(string modelPath = "models/vosk-model-en-us-0.22")
         {
@@ -13,25 +14,24 @@ namespace SRC_WebApp_Bc_Proj.Server.Speech_to_Text
 
             if (!Directory.Exists(_modelPath))
             {
-                throw new DirectoryNotFoundException($"Vosk model nebyl nalezen na cestě: {_modelPath}. " +
-                    "Stáhni si model z https://alphacephei.com/vosk/models a vlož ho do složky s projektem.");
+                throw new DirectoryNotFoundException($"Vosk model nebyl nalezen na cestě: {_modelPath}.");
             }
+
+            // Model se načte jen jednou při startu (musí být Singleton v Program.cs)
+            Vosk.Vosk.SetLogLevel(0); // Volitelné: vypne zbytečný spam v konzoli
+            _voskModel = new Model(_modelPath);
         }
 
         public string ConvertSpeechToText(string audioFilePath)
         {
             if (!File.Exists(audioFilePath)) return "Soubor nenalezen.";
 
-            using var model = new Model(_modelPath);
-            using var rec = new VoskRecognizer(model, 16000.0f);
-
-            // Zapneme výřečnost, abychom viděli slova i s jistotou (confidence)
+            // Tady už používáme načtený _voskModel, nenačítáme ho znovu!
+            using var rec = new VoskRecognizer(_voskModel, 16000.0f);
             rec.SetWords(true);
 
             using var source = File.OpenRead(audioFilePath);
 
-            // Přeskočíme hlavičku WAVu (prvních 44 bajtů), 
-            // protože VoskRecognizer.AcceptWaveform očekává čistá PCM data bez hlavičky
             byte[] header = new byte[44];
             source.Read(header, 0, 44);
 
@@ -44,13 +44,16 @@ namespace SRC_WebApp_Bc_Proj.Server.Speech_to_Text
 
             var finalJson = rec.FinalResult();
 
-            // !!! TENTO VÝPIS JE KLÍČOVÝ - vlož ho sem do chatu, pokud to nepůjde
-            Console.WriteLine($"DEBUG VOSK JSON: {finalJson}");
-
             using var doc = JsonDocument.Parse(finalJson);
             string text = doc.RootElement.GetProperty("text").GetString();
 
             return string.IsNullOrWhiteSpace(text) ? "Text nebyl rozpoznán." : text;
+        }
+
+        // Protože Model držíme v paměti (unmanaged resources), je slušnost přidat Dispose
+        public void Dispose()
+        {
+            _voskModel?.Dispose();
         }
 
         private string ParseTextFromJson(string json)
